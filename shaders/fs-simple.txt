@@ -1,0 +1,12 @@
+// If device support high precision floats, use it
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+	precision highp float;
+#else
+	precision mediump float;
+#endif
+
+	varying vec2 vColorCoord;
+
+void main() {
+	gl_FragColor = vec4(vColorCoord, 0, 1);
+}

@@ -1,0 +1,23 @@
+// 3D, perspective, view, texture support
+
+// If device support high precision floats, use it
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+	precision highp float;
+#else
+	precision mediump float;
+#endif
+
+varying vec4 vWorldSpaceNormal;
+varying vec2 vVertexTextureCoord;
+
+uniform sampler2D uDiffuseSampler;
+
+void main() {
+	vec3 lightDir = vec3(0.5, 0, 1);
+	vec3 lightColor = vec3(1.0, 1.0, 1.0);
+	vec3 ambientColor = vec3(0.2, 0.2, 0.2);
+	float lightWeighting = dot(vWorldSpaceNormal.xyz, lightDir);
+	vec3 shade = ambientColor + lightColor * lightWeighting;
+	vec4 diffuse = texture2D(uDiffuseSampler, vVertexTextureCoord);
+	gl_FragColor = vec4(diffuse.rgb * shade, diffuse.a);
+}

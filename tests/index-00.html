@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<canvas id = 'c' width = '500' height = '500'></canvas>
+	<script src ='js/webgl-utils.js'></script>
+	<script src ='js/webgl-debug.js'></script>
+
+	<script>
+		var gl;
+		function initWebGL() {
+			// Create space and try to create context for WebGL
+			var c = document.getElementById('c');
+			gl = null;
+			gl = c.getContext('experimental-webgl');
+
+			// Check if browser supports WebGL
+			if (!gl) {
+				alert("Unable to initialize WebGL. Your browser may not support it.");
+			}
+			// Continue only if WebGL is available and working
+			else {
+				// Javascript console debug tool
+				gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
+
+				// Choose background color
+				gl.clearColor(0, 0, 1, 1);
+
+				gl.clear(gl.COLOR_BUFFER_BIT);
+
+			}
+		}
+
+		initWebGL();
+
+	</script>
+</html>

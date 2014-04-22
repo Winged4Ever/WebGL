@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<canvas id = 'c' width = '500' height = '500'></canvas>
+	<script src = 'js/webgl-utils.js'></script>
+	<script src = 'js/webgl-debug.js'></script>
+	<script src = 'js/mesh.js'></script>
+	<script src = 'js/vector-math.js'></script>
+
+	<script>
+		// Create space and try to create context for WebGL
+		var c = document.getElementById('c');
+		var gl = null;
+		gl = c.getContext('experimental-webgl');
+
+		// Check if browser supports WebGL
+		if (!gl) {
+			alert("Unable to initialize WebGL. Your browser may not support it.");
+		}
+		// Continue only if WebGL is available and working
+		else {
+			// Javascript console debug tool
+			gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
+
+			// Choose background color
+			gl.clearColor(0.9, 0.9, 0.9, 1);
+			gl.enable(gl.DEPTH_TEST);
+			var offset = [0.1, 0.1];
+
+			var keypad = handleKeypad();
+			var modMatrix = new Matrix4x3();
+			var camera = new Matrix4x3();
+
+			function drawScene() {
+				requestAnimationFrame(drawScene, c);
+
+				// Handle keypressing
+				offset[0] += -(keypad.panleft ? 0.2 : 0) + (keypad.panright ? 0.2 : 0);
+				offset[1] += (keypad.panup ? 0.2 : 0) - (keypad.pandown ? 0.2 : 0);
+
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+				// Inverse the order of matrices operations
+				modelMatrix().makeRotate(z, 1, 0, 0);
+				modelMatrix().multiply(modMatrix.makeRotate(z, 0, 1, 0));
+				modelMatrix().multiply(modMatrix.makeRotate(z, 0, 0, 1));
+				camera.element[14] = 2 + Math.sin(z);
+				//
+				viewMatrix().makeInverseRigidBody(camera);
+				mesh.draw();
+
+				z += 0.05;
+			};
+
+			// Create a mesh object
+			var mesh = new Mesh();
+			var z = 0;
+			// Load it and when it is ready, draw it
+			mesh.load('meshes/torus-mpv.json', drawScene);
+		}
+
+	</script>
+</html>
