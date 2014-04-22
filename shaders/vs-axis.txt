@@ -1,0 +1,15 @@
+precision mediump float;
+
+attribute vec3 aVertexPosition;
+attribute vec4 aColor;
+
+varying vec4 vColor;
+
+uniform mat4 uMMatrix;
+uniform mat4 uPMatrix;
+uniform mat4 uVMatrix;
+
+void main() {
+	vColor = aColor;
+	gl_Position = uMMatrix * uPMatrix * uVMatrix * vec4(aVertexPosition, 1);
+}

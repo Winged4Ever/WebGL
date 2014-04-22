@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+	<canvas id = 'c' width = '500' height = '500'></canvas>
+	<script src ='js/webgl-utils.js'></script>
+	<script src ='js/webgl-debug.js'></script>
+
+<!-- VERTEX SHADER -->
+	<script id = 'vshader' type = 'x-shader'>
+		// attribute - per-vertex data, changing for each vertex
+		attribute vec2 aVertexPosition;
+		attribute vec2 aTexCoord;
+		// varying - data passed on to fragment shader
+		varying vec2 vTexCoord;
+
+		void main() {
+			gl_Position = vec4(aVertexPosition, 0, 1);
+			vTexCoord = aTexCoord;
+		}
+	</script>
+
+<!-- FRAGMENT SHADER -->
+	<script id = 'fshader' type = 'x-shader'>
+		// If device support high precision floats, use it
+		#ifdef GL_FRAGMENT_PRECISION_HIGH
+			precision highp float;
+		#else
+			precision mediump float;
+		#endif
+
+			varying vec2 vTexCoord;
+			// Create texture storer
+			uniform sampler2D uSampler;
+
+		void main() {
+			// Apply texture instead of color
+			gl_FragColor = texture2D(uSampler, vTexCoord);
+		}
+	</script>
+
+<!-- MAIN WEBGL SCRIPT -->
+	<script>
+		var gl;
+		function initWebGL() {
+			// Create space and try to create context for WebGL
+			var c = document.getElementById('c');
+			gl = null;
+			gl = c.getContext('experimental-webgl');
+
+			// Check if browser supports WebGL
+			if (!gl) {
+				alert("Unable to initialize WebGL. Your browser may not support it.");
+			}
+			// Continue only if WebGL is available and working
+			else {
+				// Javascript console debug tool
+				gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
+				
+				// Choose background color
+				gl.clearColor(0, 0, 0, 1);
+
+				initShaders();
+
+				initBuffers();
+
+				initTexture();
+
+				drawScene();
+			}
+		}
+
+		var program;
+		function initShaders() {
+			// Get shaders from script tags
+			var vs = document.getElementById('vshader').textContent;
+			var fs = document.getElementById('fshader').textContent;
+			// Create a shader program
+			program = createProgram(vs, fs);
+			gl.useProgram(program);
+
+			/*-- Specify ATTRIBUTES locations --*/
+			program.vertexPosAttrib = gl.getAttribLocation(program, 'aVertexPosition');
+			// Enable this attribute as an array
+			gl.enableVertexAttribArray(program.vertexPosAttrib);
+			program.texCoordAttrib = gl.getAttribLocation(program, 'aTexCoord');
+			gl.enableVertexAttribArray(program.texCoordAttrib);
+
+			/*-- Specify UNIFORMS locations --*/
+			program.samplerUniform = gl.getUniformLocation(program, 'uSampler');			
+		}
+
+		var vertexPosBuffer;
+		var texCoordBuffer;
+		function initBuffers() {
+			vertexPosBuffer = generateQuad();
+			texCoordBuffer = textureQuad();
+		}
+
+		var texture;
+		function initTexture() {
+			texture = gl.createTexture();
+			texture.img = new Image();
+
+			texture.img.onload = function() {
+				// Tell WebGL that we are working on this texture
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				// Flip texture so we will see it in a right direction
+				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+				// Specify texture data and upload it on graphic card
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.img);
+				// Specify texture parameters (i.e. scaling filter)
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+				// Prevent repeating
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				// Not necessary but it's kind of tidying up
+				gl.bindTexture(gl.TEXTURE_2D, null);
+
+				// Temporary escape from unescapable function LOL
+				drawScene();
+			}
+
+			// Load a texture from a server
+			texture.img.src = 'http://localhost:8080/textures/terrain.png';
+		}
+
+		function drawScene() {
+			// Clear the scene before rendering
+			gl.clear(gl.COLOR_BUFFER_BIT);
+
+			// Bind object array buffer, point to attribute and set attributes and push to GL
+			gl.bindBuffer(gl.ARRAY_BUFFER, vertexPosBuffer);
+			gl.vertexAttribPointer(program.vertexPosAttrib, vertexPosBuffer.itemSize, gl.FLOAT, false, 0 ,0);
+			// Do the same with texture
+			gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+			gl.vertexAttribPointer(program.texCoordAttrib, texCoordBuffer.itemSize, gl.FLOAT, false, 0 ,0);
+
+			// Specify the texture to map onto the faces
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, texture);
+
+			/*-- Pass UNIFORMS to shader program --*/
+			gl.uniform1i(program.samplerUniform, 0);
+
+			// Draw some triangles with predefined amount of vertices
+			gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexPosBuffer.numItems);	
+		}
+
+		initWebGL();
+
+	</script>
+</html>

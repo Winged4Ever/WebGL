@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+	<canvas id = 'c' width = '500' height = '500'></canvas>
+	<script src ='js/webgl-utils.js'></script>
+	<script src ='js/webgl-debug.js'></script>
+	
+<!-- VERTEX SHADER -->
+	<script id = 'vshader' type = 'x-shader'>
+		// attribute - per-vertex data, changing for each vertex
+		attribute vec2 aVertexPosition;
+		// varying - data passed on to fragment shader
+		varying vec2 vColorCoord;
+		// uniform - constant that is passed to shader program
+		uniform vec2 uOffset;
+
+		void main() {
+			vColorCoord = aVertexPosition + uOffset;
+			gl_Position = vec4(aVertexPosition, 0, 1);
+		}
+	</script>
+
+<!-- FRAGMENT SHADER -->
+	<script id = 'fshader' type = 'x-shader'>
+		// If device support high precision floats, use it
+		#ifdef GL_FRAGMENT_PRECISION_HIGH
+			precision highp float;
+		#else
+			precision mediump float;
+		#endif
+
+			varying vec2 vColorCoord;
+
+		void main() {
+			gl_FragColor = vec4(vColorCoord, 0, 1);
+		}
+	</script>
+
+<!-- MAIN WEBGL SCRIPT -->
+	<script>
+		// Variable declarations
+		var c = document.getElementById('c');
+		var gl = c.getContext('experimental-webgl');
+		// Javascript console debug tool
+		gl = WebGLDebugUtils.makeDebugContext(gl, throwOnGLError, logAndValidate);
+		var offset = [1, 1];
+
+		// Hold vertex data in a buffer
+		var vertexPosBuffer = generateQuad();
+
+		// Get shaders from script tags
+		var vs = document.getElementById('vshader').textContent;
+		var fs = document.getElementById('fshader').textContent;
+		// Create a shader program
+		var program = createProgram(vs, fs);
+		gl.useProgram(program);
+
+		// Specify locations of variables passed to shader program
+		program.vertexPosAttrib = gl.getAttribLocation(program, 'aVertexPosition');
+		program.offsetUniform = gl.getUniformLocation(program, 'uOffset');
+
+		// Enable this attribute as an array
+		gl.enableVertexAttribArray(program.vertexPosAttrib);
+		// Set the format of an in-data - not normalized float and specified amount of items
+		gl.vertexAttribPointer(program.vertexPosAttrib, vertexPosBuffer.itemSize, gl.FLOAT, false, 0 ,0);
+
+		// Make background
+		gl.clearColor(0, 0, 0, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		function draw() {
+			// Pass uniforms to shader program
+			gl.uniform2f(program.offsetUniform, offset[0], offset[1]);
+
+			// Draw some triangles with predefined amount of vertices
+			gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexPosBuffer.numItems);	
+		};
+
+		draw();
+
+	</script>
+</html>

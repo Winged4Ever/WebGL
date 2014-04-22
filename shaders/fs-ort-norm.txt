@@ -1,0 +1,17 @@
+// 3D, ortographic projection
+
+// If device support high precision floats, use it
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+	precision highp float;
+#else
+	precision mediump float;
+#endif
+
+varying vec4 vWorldSpaceNormal;
+
+void main() {
+	vec4 objectColor = vec4(0.4, 0.4, 0.4, 1);
+	vec3 lightDir = vec3(0.5, 0, -1);
+	float diffuse = dot(vWorldSpaceNormal.xyz, lightDir);
+	gl_FragColor = vec4(objectColor.r * diffuse, objectColor.g * diffuse, objectColor.b * diffuse, objectColor.a);
+}
